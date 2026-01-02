@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Notebook - 个人知识库</title>
+    <link rel="preconnect" href="https://fonts.googleapis.cn">
+    <link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin>
+    <link href="https://fonts.googleapis.cn/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=5">
+    <script src="https://s4.zstatic.net/ajax/libs/marked/16.3.0/lib/marked.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header hidden">
+            <div class="header-brand">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="4" width="32" height="32" rx="2"/>
+                        <line x1="12" y1="12" x2="28" y2="12"/>
+                        <line x1="12" y1="18" x2="24" y2="18"/>
+                        <line x1="12" y1="24" x2="20" y2="24"/>
+                    </svg>
+                </div>
+                <div class="logo-type">
+                    <span class="logo-name">OPEN NOTEBOOK</span>
+                    <span class="logo-tagline">知识存档</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Landing Page: Notebook List -->
+        <section class="landing-page hidden" id="landingPage">
+            <div class="landing-header">
+                <div class="landing-brand">
+                    <h1>我的笔记本</h1>
+                    <p>管理和探索你的知识存档</p>
+                </div>
+                <button class="btn-primary btn-large" id="btnNewNotebookLanding">
+                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="2" x2="8" y2="14"/>
+                        <line x1="2" y1="8" x2="14" y2="8"/>
+                    </svg>
+                    新建笔记本
+                </button>
+            </div>
+            <div class="notebook-grid" id="notebookGridLanding">
+                <!-- Notebook cards will be rendered here -->
+            </div>
+        </section>
+
+        <!-- Workspace (Hidden by default) -->
+        <div class="workspace-container hidden" id="workspaceContainer">
+            <nav class="workspace-nav">
+                <button class="btn-back" id="btnBackToList">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="15" y1="9" x2="3" y2="9"/>
+                        <polyline points="9,15 3,9 9,3"/>
+                    </svg>
+                    返回列表
+                </button>
+                <div class="current-notebook-info">
+                    <h2 id="currentNotebookName">笔记本名称</h2>
+                </div>
+                <div class="workspace-actions">
+                    <button class="btn-new-notebook" id="btnNewNotebook">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="2" x2="8" y2="14"/>
+                            <line x1="2" y1="8" x2="14" y2="8"/>
+                        </svg>
+                        新建笔记本
+                    </button>
+                </div>
+            </nav>
+
+            <main class="main-grid">
+                <!-- Left Panel: Sources -->
+                <aside class="panel panel-left">
+                    <div class="panel-header">
+                        <h2 class="panel-title">来源</h2>
+                        <div class="panel-actions">
+                            <button class="btn-icon" id="btnAddSource" title="添加来源">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="9" y1="2" x2="9" y2="16"/>
+                                    <line x1="2" y1="9" x2="16" y2="9"/>
+                                </svg>
+                            </button>
+                            <button class="btn-toggle-side" id="btnToggleLeft" title="切换侧边栏">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 3L5 8L10 13" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sources-list-container" id="sourcesGrid">
+                        <!-- Sources rendered here -->
+                    </div>
+                </aside>
+
+                <div class="resizer" id="resizerLeft"></div>
+
+                <!-- Center Panel: Chat -->
+                <section class="panel panel-center">
+                    <div class="panel-header">
+                        <h2 class="panel-title">对话</h2>
+                    </div>
+                    <div class="chat-messages-wrapper">
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Chat messages -->
+                        </div>
+                        <div class="chat-input-wrapper">
+                            <form class="chat-form" id="chatForm">
+                                <input
+                                    type="text"
+                                    class="chat-input"
+                                    id="chatInput"
+                                    placeholder="输入问题..."
+                                    autocomplete="off"
+                                >
+                                <button type="submit" class="btn-send" id="btnSend">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="2" y1="16" x2="16" y2="2"/>
+                                        <polyline points="2,2 2,16 16,16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="resizer" id="resizerRight"></div>
+
+                <!-- Right Panel: Transform & Notes Stack -->
+                <aside class="panel panel-right">
+                    <!-- Transform Section -->
+                    <div class="workspace-section section-transform">
+                        <div class="panel-header studio-header">
+                            <button class="btn-toggle-side" id="btnToggleRight" title="切换侧边栏">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 3L11 8L6 13" />
+                                </svg>
+                            </button>
+                            <h2 class="panel-title">STUDIO</h2>
+                        </div>
+                        <div class="transform-options">
+                            <div class="transform-grid">
+                                <button class="transform-card" data-type="summary"><div class="transform-icon">📝</div><span class="transform-name">摘要</span></button>
+                                <button class="transform-card" data-type="faq"><div class="transform-icon">❓</div><span class="transform-name">常见问题</span></button>
+                                <button class="transform-card" data-type="study_guide"><div class="transform-icon">📚</div><span class="transform-name">学习指南</span></button>
+                                <button class="transform-card" data-type="outline"><div class="transform-icon">📂</div><span class="transform-name">大纲</span></button>
+                                <button class="transform-card" data-type="podcast"><div class="transform-icon">🎙️</div><span class="transform-name">播客</span></button>
+                                <button class="transform-card" data-type="timeline"><div class="transform-icon">📅</div><span class="transform-name">时间线</span></button>
+                                <button class="transform-card" data-type="glossary"><div class="transform-icon">📖</div><span class="transform-name">术语表</span></button>
+                                <button class="transform-card" data-type="quiz"><div class="transform-icon">✍️</div><span class="transform-name">测验</span></button>
+                            </div>
+                            <div class="transform-custom-pill">
+                                <input type="text" id="customPrompt" placeholder="自定义生成..." autocomplete="off">
+                                <button id="btnCustomTransform">生成</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="workspace-section section-notes">
+                        <div class="panel-header">
+                            <h2 class="panel-title">笔记 (0)</h2>
+                        </div>
+                        <div class="notes-list" id="notesList">
+                            <!-- Notes rendered here -->
+                        </div>
+                    </div>
+                </aside>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-info">
+                <span class="footer-status" id="footerStatus">就绪</span>
+                <span class="footer-divider">|</span>
+                <span class="footer-stats" id="footerStats">0 来源 · 0 笔记</span>
+            </div>
+            <div class="footer-credit">
+                Powered by <a href="https://github.com/smallnest/langgraphgo" target="_blank">LangGraphGo</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalOverlay">
+        <!-- New Notebook Modal -->
+        <div class="modal" id="newNotebookModal">
+            <div class="modal-header">
+                <h3>新建笔记本</h3>
+                <button class="btn-close" id="btnCloseNotebookModal">×</button>
+            </div>
+            <form class="modal-body" id="newNotebookForm">
+                <div class="form-group">
+                    <label class="input-label">名称</label>
+                    <input
+                        type="text"
+                        class="input-field"
+                        name="name"
+                        placeholder="研究笔记"
+                        required
+                        autofocus
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="input-label">描述 (可选)</label>
+                    <textarea
+                        class="input-field"
+                        name="description"
+                        placeholder="简要描述..."
+                        rows="2"
+                    ></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="btnCancelNotebook">取消</button>
+                    <button type="submit" class="btn-primary">创建笔记本</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Add Source Modal -->
+        <div class="modal" id="addSourceModal">
+            <div class="modal-header">
+                <h3>添加来源</h3>
+                <button class="btn-close" id="btnCloseSourceModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="source-tabs">
+                    <button class="source-tab active" data-source="file">上传文件</button>
+                    <button class="source-tab" data-source="text">粘贴文本</button>
+                    <button class="source-tab" data-source="url">网址</button>
+                </div>
+
+                <!-- File Upload -->
+                <div class="source-content active" id="sourceFile">
+                    <div class="drop-zone" id="dropZone">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 8 L28 8 L28 20 L40 20 L40 40 L8 40 L8 8 L20 8 Z"/>
+                            <polyline points="28,8 28,20 40,20"/>
+                        </svg>
+                        <p>拖放文件到此处或点击浏览</p>
+                        <span class="drop-hint">支持 PDF, TXT, MD, DOCX, HTML</span>
+                        <input type="file" id="fileInput" accept=".pdf,.txt,.md,.docx,.html,.htm" multiple hidden>
+                    </div>
+                </div>
+
+                <!-- Text Input -->
+                <div class="source-content" id="sourceText">
+                    <form id="textSourceForm">
+                        <div class="form-group">
+                            <label class="input-label">名称</label>
+                            <input type="text" class="input-field" name="name" placeholder="笔记标题" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="input-label">内容</label>
+                            <textarea
+                                class="input-field font-mono"
+                                name="content"
+                                placeholder="在此粘贴或输入内容..."
+                                rows="10"
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" id="btnCancelText">取消</button>
+                            <button type="submit" class="btn-primary">添加来源</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- URL Input -->
+                <div class="source-content" id="sourceUrl">
+                    <form id="urlSourceForm">
+                        <div class="form-group">
+                            <label class="input-label">网址</label>
+                            <input
+                                type="url"
+                                class="input-field font-mono"
+                                name="url"
+                                placeholder="https://example.com/article"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label class="input-label">名称 (可选)</label>
+                            <input type="text" class="input-field" name="name" placeholder="文章标题">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" id="btnCancelURL">取消</button>
+                            <button type="submit" class="btn-primary">添加来源</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text" id="loadingText">处理中...</p>
+    </div>
+
+    <!-- Templates -->
+    <template id="notebookCardTemplate">
+        <div class="notebook-card" data-id="">
+            <div class="notebook-card-content">
+                <div class="notebook-card-icon">
+                    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="8" y="8" width="24" height="24" rx="2"/>
+                        <line x1="14" y1="16" x2="26" y2="16"/>
+                        <line x1="14" y1="22" x2="22" y2="22"/>
+                    </svg>
+                </div>
+                <h3 class="notebook-card-name"></h3>
+                <p class="notebook-card-desc"></p>
+                <div class="notebook-card-stats">
+                    <span class="stat-sources">0 来源</span>
+                    <span class="stat-notes">0 笔记</span>
+                </div>
+            </div>
+            <button class="btn-delete-card" title="删除">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="4,3 4,2 10,2 10,3"/>
+                    <line x1="2" y1="4" x2="12" y2="4"/>
+                    <line x1="5" y1="7" x2="5" y2="11"/>
+                    <line x1="9" y1="7" x2="9" y2="11"/>
+                </svg>
+            </button>
+        </div>
+    </template>
+
+    <template id="notebookTemplate">
+        <div class="notebook-item" data-id="">
+            <div class="notebook-header">
+                <svg class="notebook-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="2" width="12" height="12" rx="1"/>
+                    <line x1="5" y1="5" x2="11" y2="5"/>
+                    <line x1="5" y1="7" x2="9" y2="7"/>
+                </svg>
+                <span class="notebook-name"></span>
+            </div>
+            <div class="notebook-meta">
+                <span class="notebook-sources">0 来源</span>
+                <span class="notebook-notes">0 笔记</span>
+            </div>
+            <button class="btn-delete-notebook" title="删除笔记本">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="4,3 4,2 10,2 10,3"/>
+                    <line x1="2" y1="4" x2="12" y2="4"/>
+                    <line x1="5" y1="7" x2="5" y2="11"/>
+                    <line x1="9" y1="7" x2="9" y2="11"/>
+                </svg>
+            </button>
+        </div>
+    </template>
+
+    <template id="sourceTemplate">
+        <div class="source-card" data-id="">
+            <div class="source-type-badge"></div>
+            <div class="source-icon"></div>
+            <h4 class="source-name"></h4>
+            <div class="source-details-row">
+                <p class="source-meta"></p>
+                <div class="source-chunks">
+                    <span class="chunk-count"></span>
+                    <span> 块</span>
+                </div>
+            </div>
+            <button class="btn-remove-source" title="移除来源">×</button>
+        </div>
+    </template>
+
+    <template id="noteTemplate">
+        <div class="note-item" data-id="">
+            <div class="note-type-badge"></div>
+            <h4 class="note-title"></h4>
+            <div class="note-preview"></div>
+            <div class="note-meta">
+                <span class="note-date"></span>
+                <span class="note-sources"></span>
+            </div>
+            <button class="btn-delete-note" title="删除笔记">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="4,3 4,2 10,2 10,3"/>
+                    <line x1="2" y1="4" x2="12" y2="4"/>
+                    <line x1="5" y1="7" x2="5" y2="11"/>
+                    <line x1="9" y1="7" x2="9" y2="11"/>
+                </svg>
+            </button>
+        </div>
+    </template>
+
+    <template id="messageTemplate">
+        <div class="chat-message" data-role="">
+            <div class="message-avatar"></div>
+            <div class="message-content">
+                <p class="message-text"></p>
+                <div class="message-sources"></div>
+            </div>
+        </div>
+    </template>
+
+    <script src="/static/app.js?v=5"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Notex Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notex
+    environment:
+      # Server
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+
+      # LLM (choose one)
+      # Fill your OpenAI API key or use Ollama
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+
+      # Vector Store (Default to SQLite for easy setup)
+      - VECTOR_STORE_TYPE=sqlite
+      - SQLITE_PATH=/data/vector.db
+
+      # Store (Metadata)
+      - STORE_TYPE=sqlite
+      - STORE_PATH=/data/checkpoints.db
+
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Ollama (Optional, if you want to run LLM locally in container)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: notex-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   restart: unless-stopped
+
+volumes:
+  app-data:

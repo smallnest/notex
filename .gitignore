@@ -30,3 +30,11 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+uploads/
+data/
+
+open-notebook
+!open-notebook/
+
+server.log
