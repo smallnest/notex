@@ -349,7 +349,7 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
-.main-grid.right-collapsed .btn-toggle-side {
+.main-grid.right-collapsed #btnToggleRight {
     transform: rotate(180deg) !important;
 }
 
