@@ -64,19 +64,19 @@ func NewServer(cfg Config) (*Server, error) {
 	// Restore vector store from persistent storage
 	ctx := context.Background()
 	notebooks, _ := store.ListNotebooks(ctx)
-	golog.Infof("🔄 Restoring vector index for %d notebooks...", len(notebooks))
+	golog.Infof("🔄 restoring vector index for %d notebooks...", len(notebooks))
 	for _, nb := range notebooks {
 		sources, _ := store.ListSources(ctx, nb.ID)
 		for _, src := range sources {
 			if src.Content != "" {
 				if err := vectorStore.IngestText(ctx, src.Name, src.Content); err != nil {
-					golog.Errorf("Failed to restore source %s: %v", src.Name, err)
+					golog.Errorf("failed to restore source %s: %v", src.Name, err)
 				}
 			}
 		}
 	}
 	stats, _ := vectorStore.GetStats(ctx)
-	golog.Infof("✅ Vector index restored: %d documents", stats.TotalDocuments)
+	golog.Infof("✅ vector index restored: %d documents", stats.TotalDocuments)
 
 	s.setupRoutes()
 
@@ -145,7 +145,7 @@ func (s *Server) setupRoutes() {
 // Start starts the server
 func (s *Server) Start() error {
 	addr := fmt.Sprintf("%s:%s", s.cfg.ServerHost, s.cfg.ServerPort)
-	golog.Infof("Server starting on %s", addr)
+	golog.Infof("server starting on %s", addr)
 	return s.http.Run(addr)
 }
 
@@ -190,7 +190,7 @@ func (s *Server) handleCreateNotebook(c *gin.Context) {
 
 	notebook, err := s.store.CreateNotebook(ctx, req.Name, req.Description, req.Metadata)
 	if err != nil {
-		golog.Errorf("Error creating notebook: %v", err)
+		golog.Errorf("error creating notebook: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: fmt.Sprintf("Failed to create notebook: %v", err)})
 		return
 	}
@@ -296,7 +296,7 @@ func (s *Server) handleAddSource(c *gin.Context) {
 	// Ingest into vector store (synchronous for immediate availability)
 	if source.Content != "" {
 		if err := s.vectorStore.IngestText(ctx, source.Name, source.Content); err != nil {
-			golog.Errorf("Failed to ingest text: %v", err)
+			golog.Errorf("failed to ingest text: %v", err)
 		}
 	}
 
@@ -337,14 +337,14 @@ func (s *Server) handleUpload(c *gin.Context) {
 
 	// Ensure uploads directory exists
 	if err := os.MkdirAll("./data/uploads", 0755); err != nil {
-		golog.Errorf("Failed to create uploads directory: %v", err)
+		golog.Errorf("failed to create uploads directory: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create uploads directory"})
 		return
 	}
 
 	// Save file
 	if err := c.SaveUploadedFile(file, tempPath); err != nil {
-		golog.Errorf("Failed to save file: %v", err)
+		golog.Errorf("failed to save file: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: fmt.Sprintf("Failed to save file: %v", err)})
 		return
 	}
@@ -362,14 +362,14 @@ func (s *Server) handleUpload(c *gin.Context) {
 	// Extract content
 	content, err := s.vectorStore.ExtractDocument(ctx, tempPath)
 	if err != nil {
-		golog.Errorf("Failed to extract document content: %v", err)
+		golog.Errorf("failed to extract document content: %v", err)
 		source.Content = fmt.Sprintf("Failed to extract: %v", err)
 	} else {
 		source.Content = content
 	}
 
 	if err := s.store.CreateSource(ctx, source); err != nil {
-		golog.Errorf("Failed to create source: %v", err)
+		golog.Errorf("failed to create source: %v", err)
 		// Clean up uploaded file on error
 		os.Remove(tempPath)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create source"})
@@ -383,7 +383,7 @@ func (s *Server) handleUpload(c *gin.Context) {
 
 	if source.Content != "" && !strings.HasPrefix(source.Content, "Failed to extract") {
 		if err := s.vectorStore.IngestText(ctx, source.Name, source.Content); err != nil {
-			golog.Errorf("Failed to ingest document: %v", err)
+			golog.Errorf("failed to ingest document: %v", err)
 		} else {
 			// Get updated stats to calculate chunk count
 			stats, _ = s.vectorStore.GetStats(ctx)
@@ -520,7 +520,7 @@ func (s *Server) handleTransform(c *gin.Context) {
 	if req.Type == "infograph" {
 		imagePath, err := s.agent.GenerateInfographImage(ctx, response.Content)
 		if err != nil {
-			golog.Errorf("Failed to generate infographic image: %v", err)
+			golog.Errorf("failed to generate infographic image: %v", err)
 			metadata["image_error"] = err.Error()
 		} else {
 			// Convert local path to web path

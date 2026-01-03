@@ -14,8 +14,8 @@ import (
 // GenerateInfographImage generates an infographic image using the Nano Banana Pro SDK
 func (a *Agent) GenerateInfographImage(ctx context.Context, prompt string) (string, error) {
 	if a.cfg.GoogleAPIKey == "" {
-		golog.Errorf("GOOGLE_API_KEY is not set")
-		return "", fmt.Errorf("GOOGLE_API_KEY is not set")
+		golog.Errorf("google_api_key is not set")
+		return "", fmt.Errorf("google_api_key is not set")
 	}
 
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
@@ -30,16 +30,16 @@ func (a *Agent) GenerateInfographImage(ctx context.Context, prompt string) (stri
 
 	// Using gemini-3-pro-image-preview as per the new documentation example
 	model := "gemini-3-pro-image-preview"
-	golog.Infof("Generating infographic with model %s using GenerateContent...", model)
+	golog.Infof("generating infographic with model %s using GenerateContent...", model)
 
 	resp, err := client.Models.GenerateContent(ctx, model, genai.Text(prompt), nil)
 	if err != nil {
-		golog.Errorf("Failed to generate content: %v", err)
+		golog.Errorf("failed to generate content: %v", err)
 		return "", fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil {
-		golog.Errorf("No candidates returned by the model")
+		golog.Errorf("no candidates returned by the model")
 		return "", fmt.Errorf("no candidates generated")
 	}
 
@@ -52,11 +52,11 @@ func (a *Agent) GenerateInfographImage(ctx context.Context, prompt string) (stri
 	}
 
 	if len(imageData) == 0 {
-		golog.Errorf("No image data found in the response parts")
+		golog.Errorf("no image data found in the response parts")
 		return "", fmt.Errorf("no image data in response")
 	}
 
-	golog.Infof("Image data received successfully, saving...")
+	golog.Infof("image data received successfully, saving...")
 
 	// Save the image
 	fileName := fmt.Sprintf("infograph_%d.png", time.Now().UnixNano())
@@ -67,10 +67,10 @@ func (a *Agent) GenerateInfographImage(ctx context.Context, prompt string) (stri
 
 	filePath := filepath.Join(uploadDir, fileName)
 	if err := os.WriteFile(filePath, imageData, 0644); err != nil {
-		golog.Errorf("Failed to save image to %s: %v", filePath, err)
+		golog.Errorf("failed to save image to %s: %v", filePath, err)
 		return "", fmt.Errorf("failed to save image: %w", err)
 	}
 
-	golog.Infof("Infographic saved to %s", filePath)
+	golog.Infof("infographic saved to %s", filePath)
 	return filePath, nil
 }

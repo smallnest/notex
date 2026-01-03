@@ -41,9 +41,9 @@ func main() {
 	}()
 
 	golog.SetTimeFormat("2006/01/02 15:04:05.000")
-	sonarLog := "./logs/notex.log.%Y%m%d"
+	logFiles := "./logs/notex.log.%Y%m%d"
 	w, err := rotatelogs.New(
-		sonarLog,
+		logFiles,
 		rotatelogs.WithLinkName("./logs/notex.log"),
 		rotatelogs.WithMaxAge(time.Duration(7)*24*time.Hour),
 		rotatelogs.WithRotationTime(24*time.Hour))
@@ -56,7 +56,7 @@ func main() {
 	// Load and validate configuration
 	cfg := backend.LoadConfig()
 	if err := backend.ValidateConfig(cfg); err != nil {
-		golog.Fatalf("Configuration error: %v\n\n"+
+		golog.Fatalf("configuration error: %v\n\n"+
 			"Required environment variables:\n"+
 			"  - OPENAI_API_KEY (for OpenAI) or\n"+
 			"  - OLLAMA_BASE_URL (for local Ollama)\n\n"+
@@ -89,32 +89,32 @@ func main() {
 func runServerMode(cfg backend.Config) {
 	server, err := backend.NewServer(cfg)
 	if err != nil {
-		golog.Fatalf("Failed to create server: %v", err)
+		golog.Fatalf("failed to create server: %v", err)
 	}
 
-	golog.Infof("Version:     %s", Version)
-	golog.Infof("Server:      http://%s:%s", cfg.ServerHost, cfg.ServerPort)
-	golog.Infof("LLM:         %s", cfg.OpenAIModel)
-	golog.Infof("Vector Store: %s", cfg.VectorStoreType)
+	golog.Infof("version:     %s", Version)
+	golog.Infof("server:      http://%s:%s", cfg.ServerHost, cfg.ServerPort)
+	golog.Infof("llm:         %s", cfg.OpenAIModel)
+	golog.Infof("vector store: %s", cfg.VectorStoreType)
 
 	if err := server.Start(); err != nil {
-		golog.Fatalf("Server error: %v", err)
+		golog.Fatalf("server error: %v", err)
 	}
 }
 
 func runIngestMode(ctx context.Context, cfg backend.Config, filePath, notebookName string) {
-	golog.Infof("📂 Ingesting file: %s...", filePath)
+	golog.Infof("📂 ingesting file: %s...", filePath)
 
 	// Initialize vector store
 	vectorStore, err := backend.NewVectorStore(cfg)
 	if err != nil {
-		golog.Fatalf("Failed to initialize vector store: %v", err)
+		golog.Fatalf("failed to initialize vector store: %v", err)
 	}
 
 	// Initialize store
 	store, err := backend.NewStore(cfg)
 	if err != nil {
-		golog.Fatalf("Failed to initialize store: %v", err)
+		golog.Fatalf("failed to initialize store: %v", err)
 	}
 
 	// Create or get notebook
@@ -130,16 +130,16 @@ func runIngestMode(ctx context.Context, cfg backend.Config, filePath, notebookNa
 	if notebookID == "" {
 		nb, err := store.CreateNotebook(ctx, notebookName, "Created by ingest mode", nil)
 		if err != nil {
-			golog.Fatalf("Failed to create notebook: %v", err)
+			golog.Fatalf("failed to create notebook: %v", err)
 		}
 		notebookID = nb.ID
-		golog.Infof("📓 Created notebook: %s", notebookName)
+		golog.Infof("📓 created notebook: %s", notebookName)
 	}
 
 	// Extract content
 	content, err := vectorStore.ExtractDocument(ctx, filePath)
 	if err != nil {
-		golog.Fatalf("Extraction failed: %v", err)
+		golog.Fatalf("extraction failed: %v", err)
 	}
 
 	// Create source in database
@@ -155,16 +155,16 @@ func runIngestMode(ctx context.Context, cfg backend.Config, filePath, notebookNa
 	}
 
 	if err := store.CreateSource(ctx, source); err != nil {
-		golog.Fatalf("Failed to create source: %v", err)
+		golog.Fatalf("failed to create source: %v", err)
 	}
 
 	// Ingest document
 	if err := vectorStore.IngestText(ctx, source.Name, content); err != nil {
-		golog.Fatalf("Ingestion failed: %v", err)
+		golog.Fatalf("ingestion failed: %v", err)
 	}
 
-	golog.Infof("✅ Ingestion complete!")
-	golog.Infof("📓 Notebook: %s (ID: %s)", notebookName, notebookID)
+	golog.Infof("✅ ingestion complete!")
+	golog.Infof("📓 notebook: %s (ID: %s)", notebookName, notebookID)
 }
 
 func printUsage() {
