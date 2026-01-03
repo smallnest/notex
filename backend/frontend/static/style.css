@@ -461,7 +461,14 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1rem;
+    box-sizing: border-box;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.transform-icon svg {
+    color: inherit;
+    width: 16px;
+    height: 16px;
 }
 
 .transform-card span {
@@ -953,10 +960,110 @@ body {
     border-bottom-color: var(--accent-primary);
 }
 
+.tab-btn .tab-close {
+    margin-left: 8px;
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.tab-btn .tab-close:hover {
+    opacity: 1;
+    color: var(--accent-red);
+}
+
+.tab-btn[data-tab="note"],
+.tab-btn[data-tab="notes_list"] {
+    display: none;
+}
+
+.tab-btn[data-tab="note"].active,
+.tab-btn[data-tab="notes_list"].active,
+.tab-btn[data-tab="notes_list"]:not(.hidden) {
+    display: flex;
+}
+
+.tab-btn.hidden {
+    display: none !important;
+}
+
 .tab-content {
     display: none;
     flex: 1;
     overflow: hidden;
+}
+
+/* Notes Grid in Center Panel */
+.notes-details-view {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-secondary);
+    padding: var(--space-xl);
+    overflow-y: auto;
+}
+
+.notes-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-lg);
+    width: 100%;
+}
+
+.compact-note-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.compact-note-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.compact-note-card .note-type {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.compact-note-card .note-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.compact-note-card .note-preview {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+}
+
+.compact-note-card .note-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 0.65rem;
+    color: var(--text-light);
 }
 
 .tab-content.active {

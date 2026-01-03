@@ -75,6 +75,15 @@ class OpenNotebook {
         safeAddEventListener('btnBackToList', 'click', () => this.switchView('landing'));
         safeAddEventListener('btnToggleRight', 'click', () => this.toggleRightPanel());
         safeAddEventListener('btnToggleLeft', 'click', () => this.toggleLeftPanel());
+        safeAddEventListener('btnShowNotesDetails', 'click', () => this.showNotesListTab());
+        safeAddEventListener('btnCloseNotesList', 'click', (e) => {
+            e.stopPropagation();
+            this.closeNotesListTab();
+        });
+        safeAddEventListener('btnCloseNote', 'click', (e) => {
+            e.stopPropagation();
+            this.closeNoteTab();
+        });
 
         // Panel tabs
         document.querySelectorAll('.tab-btn').forEach(tab => {
@@ -282,17 +291,106 @@ class OpenNotebook {
         // Update content visibility
         const chatWrapper = document.querySelector('.chat-messages-wrapper');
         const noteViewContainer = document.querySelector('.note-view-container');
+        const notesDetailsView = document.querySelector('.notes-details-view');
 
         if (tab === 'note') {
             chatWrapper.style.display = 'none';
+            if (notesDetailsView) notesDetailsView.style.display = 'none';
             if (noteViewContainer) {
                 noteViewContainer.style.display = 'flex';
             }
         } else if (tab === 'chat') {
             chatWrapper.style.display = 'flex';
+            if (notesDetailsView) notesDetailsView.style.display = 'none';
             if (noteViewContainer) {
                 noteViewContainer.style.display = 'none';
             }
+        } else if (tab === 'notes_list') {
+            chatWrapper.style.display = 'none';
+            if (noteViewContainer) noteViewContainer.style.display = 'none';
+            if (notesDetailsView) {
+                notesDetailsView.style.display = 'flex';
+                this.renderNotesCompactGrid();
+            }
+        }
+    }
+
+    async showNotesListTab() {
+        const tabBtn = document.getElementById('tabBtnNotesList');
+        tabBtn.classList.remove('hidden');
+
+        // Ensure notesDetailsView container exists
+        let notesDetailsView = document.querySelector('.notes-details-view');
+        if (!notesDetailsView) {
+            const chatWrapper = document.querySelector('.chat-messages-wrapper');
+            notesDetailsView = document.createElement('div');
+            notesDetailsView.className = 'notes-details-view';
+            notesDetailsView.innerHTML = '<div class="notes-compact-grid"></div>';
+            chatWrapper.insertAdjacentElement('afterend', notesDetailsView);
+        }
+
+        this.switchPanelTab('notes_list');
+    }
+
+    closeNotesListTab() {
+        const tabBtn = document.getElementById('tabBtnNotesList');
+        tabBtn.classList.add('hidden');
+        
+        const notesDetailsView = document.querySelector('.notes-details-view');
+        if (notesDetailsView) notesDetailsView.style.display = 'none';
+        
+        if (tabBtn.classList.contains('active')) {
+            this.switchPanelTab('chat');
+        }
+    }
+
+    closeNoteTab() {
+        const noteViewContainer = document.querySelector('.note-view-container');
+        if (noteViewContainer) noteViewContainer.remove();
+        
+        const tabBtnNote = document.getElementById('tabBtnNote');
+        if (tabBtnNote) tabBtnNote.style.display = 'none';
+
+        this.switchPanelTab('chat');
+    }
+
+    async renderNotesCompactGrid() {
+        if (!this.currentNotebook) return;
+        
+        const container = document.querySelector('.notes-compact-grid');
+        if (!container) return;
+
+        try {
+            const notes = await this.api(`/notebooks/${this.currentNotebook.id}/notes`);
+            container.innerHTML = '';
+
+            notes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'compact-note-card';
+                
+                const plainText = note.content
+                    .replace(/^#+\s+/gm, '')
+                    .replace(/\*\*/g, '')
+                    .replace(/\*/g, '')
+                    .replace(/`/g, '')
+                    .replace(/\n+/g, ' ')
+                    .trim();
+
+                card.innerHTML = `
+                    <div class="note-type">${note.type}</div>
+                    <h4 class="note-title">${note.title}</h4>
+                    <p class="note-preview">${plainText}</p>
+                    <div class="note-footer">
+                        <span>${this.formatDate(note.created_at)}</span>
+                        <span>${note.source_ids?.length || 0} 来源</span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => this.viewNote(note));
+                container.appendChild(card);
+            });
+        } catch (error) {
+            console.error('Failed to load notes for grid:', error);
         }
     }
 
@@ -661,6 +759,12 @@ class OpenNotebook {
     async viewNote(note) {
         const renderedContent = marked.parse(note.content);
 
+        // Show the Note tab button
+        const tabBtnNote = document.getElementById('tabBtnNote');
+        if (tabBtnNote) {
+            tabBtnNote.style.display = 'flex';
+        }
+
         // Remove existing note view if any
         const existingNoteView = document.querySelector('.note-view-container');
         if (existingNoteView) {
@@ -827,6 +931,12 @@ class OpenNotebook {
             });
             await this.loadNotes();
             await this.updateCurrentNotebookCounts();
+
+            // If notes_list tab is active or visible, refresh it
+            const tabBtnNotesList = document.getElementById('tabBtnNotesList');
+            if (tabBtnNotesList && !tabBtnNotesList.classList.contains('hidden')) {
+                this.renderNotesCompactGrid();
+            }
         } catch (error) {
             this.showError('删除笔记失败');
         }
@@ -933,6 +1043,12 @@ class OpenNotebook {
             this.updateFooter();
             document.getElementById('customPrompt').value = '';
             this.setStatus(`成功生成 ${typeName}`);
+
+            // If notes_list tab is active or visible, refresh it
+            const tabBtnNotesList = document.getElementById('tabBtnNotesList');
+            if (tabBtnNotesList && !tabBtnNotesList.classList.contains('hidden')) {
+                this.renderNotesCompactGrid();
+            }
         } catch (error) {
             if (element) element.classList.remove('loading');
             placeholder.remove(); // 失败则移除占位符

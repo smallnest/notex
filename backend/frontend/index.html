@@ -104,9 +104,16 @@
                 <!-- Center Panel: Chat -->
                 <section class="panel panel-center">
                     <div class="panel-header">
-                        <div class="panel-tabs">
-                            <button class="tab-btn active" data-tab="chat">对话</button>
-                            <button class="tab-btn" data-tab="note">笔记</button>
+                        <div class="panel-tabs" id="centerPanelTabs">
+                            <button class="tab-btn" data-tab="chat">对话</button>
+                            <button class="tab-btn" data-tab="note" id="tabBtnNote">
+                                笔记
+                                <span class="tab-close" id="btnCloseNote">×</span>
+                            </button>
+                            <button class="tab-btn hidden" data-tab="notes_list" id="tabBtnNotesList">
+                                笔记列表
+                                <span class="tab-close" id="btnCloseNotesList">×</span>
+                            </button>
                         </div>
                     </div>
                     <div class="chat-messages-wrapper">
@@ -149,15 +156,60 @@
                         </div>
                         <div class="transform-options">
                             <div class="transform-grid">
-                                <button class="transform-card" data-type="summary"><div class="transform-icon">📝</div><span class="transform-name">摘要</span></button>
-                                <button class="transform-card" data-type="faq"><div class="transform-icon">❓</div><span class="transform-name">常见问题</span></button>
-                                <button class="transform-card" data-type="study_guide"><div class="transform-icon">📚</div><span class="transform-name">学习指南</span></button>
-                                <button class="transform-card" data-type="outline"><div class="transform-icon">📂</div><span class="transform-name">大纲</span></button>
-                                <button class="transform-card" data-type="podcast"><div class="transform-icon">🎙️</div><span class="transform-name">播客</span></button>
-                                <button class="transform-card" data-type="timeline"><div class="transform-icon">📅</div><span class="transform-name">时间线</span></button>
-                                <button class="transform-card" data-type="glossary"><div class="transform-icon">📖</div><span class="transform-name">术语表</span></button>
-                                <button class="transform-card" data-type="quiz"><div class="transform-icon">✍️</div><span class="transform-name">测验</span></button>
-                                <button class="transform-card" data-type="mindmap"><div class="transform-icon">🧠</div><span class="transform-name">思维导图</span></button>
+                                <button class="transform-card" data-type="summary">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    </div>
+                                    <span class="transform-name">摘要</span>
+                                </button>
+                                <button class="transform-card" data-type="faq">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                    </div>
+                                    <span class="transform-name">常见问题</span>
+                                </button>
+                                <button class="transform-card" data-type="study_guide">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                    </div>
+                                    <span class="transform-name">学习指南</span>
+                                </button>
+                                <button class="transform-card" data-type="outline">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                    </div>
+                                    <span class="transform-name">大纲</span>
+                                </button>
+                                <button class="transform-card" data-type="podcast">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </div>
+                                    <span class="transform-name">播客</span>
+                                </button>
+                                <button class="transform-card" data-type="timeline">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    </div>
+                                    <span class="transform-name">时间线</span>
+                                </button>
+                                <button class="transform-card" data-type="glossary">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                    </div>
+                                    <span class="transform-name">术语表</span>
+                                </button>
+                                <button class="transform-card" data-type="quiz">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </div>
+                                    <span class="transform-name">测验</span>
+                                </button>
+                                <button class="transform-card" data-type="mindmap">
+                                    <div class="transform-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                    </div>
+                                    <span class="transform-name">思维导图</span>
+                                </button>
                             </div>
                             <div class="transform-custom-pill">
                                 <input type="text" id="customPrompt" placeholder="自定义生成..." autocomplete="off">
@@ -170,6 +222,7 @@
                     <div class="workspace-section section-notes">
                         <div class="panel-header">
                             <h2 class="panel-title">笔记 (0)</h2>
+                            <button class="btn-text" id="btnShowNotesDetails">详情</button>
                         </div>
                         <div class="notes-list" id="notesList">
                             <!-- Notes rendered here -->
