@@ -11,7 +11,9 @@ An AI-powered knowledge management application that lets you create intelligent 
 
 **Project URL:** https://github.com/smallnest/notex
 
+![](docs/note.png)
 </div>
+
 
 ## ✨ Features
 
@@ -64,15 +66,15 @@ go run . -server
 
 ```bash
 # Build the binary
-go build -o open-notebook .
+go build -o notex .
 
 # Run with OpenAI
 export OPENAI_API_KEY=your_key_here
-./open-notebook -server
+./notex -server
 
 # Or run with Ollama
 export OLLAMA_BASE_URL=http://localhost:11434
-./open-notebook -server
+./notex -server
 ```
 
 ## 📖 Usage
@@ -175,69 +177,6 @@ services:
     ports:
       - "8080:8080"
 ```
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Frontend                              │
-│              (HTML/CSS/JS - Brutalist UI)                    │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTP API
-┌────────────────────▼────────────────────────────────────────┐
-│                      Server Layer                            │
-│                    (Gin Router)                              │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-┌───────▼──────┐ ┌──▼──────┐ ┌──▼──────────┐
-│  VectorStore │ │  Store  │ │   Agent     │
-│              │ │         │ │             │
-│ - Embeddings │ │ SQLite  │ │ - LLM calls │
-│ - Search     │ │         │ │ - Prompts   │
-│ - Chunks     │ │         │ │ - RAG       │
-└──────────────┘ └─────────┘ └─────────────┘
-```
-
-## 🎨 Design Philosophy
-
-This application uses an **Academic Brutalist** aesthetic:
-
-- **Warm paper tones** with sharp black ink - like archival documents
-- **Monospace technical fonts** paired with elegant serif headings
-- **Visible grid structure** - showing the "structure of knowledge"
-- **High contrast typography** for readability and focus
-- **Subtle grain texture** for warmth and depth
-
-The design emphasizes function over form, making the content the hero while maintaining a distinctive, memorable character.
-
-## 📁 Project Structure
-
-```
-notex/
-├── backend/
-│   ├── main.go          # CLI entry point
-│   ├── config.go        # Configuration management
-│   ├── types.go         # Data structures
-│   ├── store.go         # Database persistence
-│   ├── vector.go        # Vector search
-│   ├── agent.go         # AI operations
-│   └── server.go        # HTTP server
-├── frontend/
-│   ├── index.html       # Main HTML
-│   └── static/
-│       ├── style.css    # Brutalist styles
-│       └── app.js       # Application logic
-├── go.mod
-├── go.sum
-├── main.go
-├── Dockerfile
-├── Makefile
-├── docker-compose.yml
-└── README.md
-```
-
 ## 🔧 Development
 
 ### Running Tests
@@ -249,7 +188,7 @@ go test -v ./...
 ### Building
 
 ```bash
-go build -o open-notebook .
+go build -o notex .
 ```
 
 ### Code Quality
@@ -277,7 +216,7 @@ Apache License 2.0 - see [LICENSE](./LICENSE) for details.
 
 - Inspired by [Google's NotebookLM](https://notebooklm.google.com/)
 - Built with [LangGraphGo](https://github.com/smallnest/langgraphgo)
-- Powered by [LangChain Go](https://github.com/tmc/langchaingo)
+- Inspired by [open-notebook](https://github.com/lfnovo/open-notebook)
 
 ## 📞 Support
 

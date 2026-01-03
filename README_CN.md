@@ -11,6 +11,7 @@ AI 驱动知识管理应用程序，让您从文档中创建智能笔记本。
 
 **项目地址：** https://github.com/smallnest/notex
 
+![](image.png)
 </div>
 
 ## ✨ 特性
@@ -64,24 +65,24 @@ go run . -server
 
 ```bash
 # 构建二进制文件
-go build -o open-notebook .
+go build -o notex .
 
 # 使用 OpenAI 运行
 export OPENAI_API_KEY=your_key_here
-./open-notebook -server
+./notex -server
 
 # 或使用 Ollama 运行
 export OLLAMA_BASE_URL=http://localhost:11434
-./open-notebook -server
+./notex -server
 ```
 
 ## 📖 使用指南
 
 ### 创建笔记本
 
-1. 点击标题栏中的 "New Notebook" 按钮
+1. 点击标题栏中的 "新建笔记本" 按钮
 2. 输入名称和可选描述
-3. 点击 "Create Notebook"
+3. 点击 "创建笔记本"
 
 ### 添加来源
 
@@ -176,67 +177,6 @@ services:
       - "8080:8080"
 ```
 
-## 🏗️ 架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        前端                                  │
-│              (HTML/CSS/JS - 野兽派 UI)                       │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTP API
-┌────────────────────▼────────────────────────────────────────┐
-│                      服务器层                                │
-│                    (Gin 路由器)                              │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-┌───────▼──────┐ ┌──▼──────┐ ┌──▼──────────┐
-│  VectorStore │ │  Store  │ │   Agent     │
-│              │ │         │ │             │
-│ - 嵌入       │ │ SQLite  │ │ - LLM 调用  │
-│ - 搜索       │ │         │ │ - 提示工程  │
-│ - 分块       │ │         │ │ - RAG       │
-└──────────────┘ └─────────┘ └─────────────┘
-```
-
-## 🎨 设计理念
-
-本应用采用 **学术野兽派** 美学风格：
-
-- **暖色调纸张** 配以锐利的黑色墨水 - 如同档案文件
-- **等宽技术字体** 搭配优雅的衬线标题
-- **可见的网格结构** - 展示"知识结构"
-- **高对比度排版** 以提高可读性和专注度
-- **细微的纹理** 增加温暖感和深度
-
-设计强调功能胜于形式，使内容成为主角，同时保持独特、难忘的特色。
-
-## 📁 项目结构
-
-```
-notex/
-├── backend/
-│   ├── main.go          # CLI 入口点
-│   ├── config.go        # 配置管理
-│   ├── types.go         # 数据结构
-│   ├── store.go         # 数据库持久化
-│   ├── vector.go        # 向量搜索
-│   ├── agent.go         # AI 操作
-│   └── server.go        # HTTP 服务器
-├── frontend/
-│   ├── index.html       # 主 HTML
-│   └── static/
-│       ├── style.css    # 野兽派样式
-│       └── app.js       # 应用逻辑
-├── go.mod
-├── go.sum
-├── main.go
-├── Dockerfile
-├── Makefile
-├── docker-compose.yml
-└── README.md
-```
 
 ## 🔧 开发
 
@@ -249,7 +189,7 @@ go test -v ./...
 ### 构建
 
 ```bash
-go build -o open-notebook .
+go build -o notex .
 ```
 
 ### 代码质量
@@ -327,7 +267,7 @@ Apache License 2.0 - 详见 [LICENSE](./LICENSE)
 
 - 灵感来自 [Google 的 NotebookLM](https://notebooklm.google.com/)
 - 使用 [LangGraphGo](https://github.com/smallnest/langgraphgo) 构建
-- 由 [LangChain Go](https://github.com/tmc/langchaingo) 提供支持
+- 受 [open-notebook](https://github.com/lfnovo/open-notebook) 启发
 
 ## 📞 支持
 
