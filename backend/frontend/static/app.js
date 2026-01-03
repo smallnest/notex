@@ -150,11 +150,16 @@ class OpenNotebook {
 
     // API 方法
     async api(endpoint, options = {}) {
+        const timeout = options.timeout || 300000; // 默认 300 秒
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+
         const defaults = {
             headers: {
                 'Content-Type': 'application/json',
             },
-            cache: 'no-store'
+            cache: 'no-store',
+            signal: controller.signal
         };
 
         let url = `${this.apiBase}${endpoint}`;
@@ -163,18 +168,27 @@ class OpenNotebook {
             url += `${separator}_t=${Date.now()}`;
         }
 
-        const response = await fetch(url, { ...defaults, ...options });
+        try {
+            const response = await fetch(url, { ...defaults, ...options });
+            clearTimeout(id);
 
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ error: '请求失败' }));
-            throw new Error(error.error || '请求失败');
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ error: '请求失败' }));
+                throw new Error(error.error || '请求失败');
+            }
+
+            if (response.status === 204) {
+                return null;
+            }
+
+            return response.json();
+        } catch (error) {
+            clearTimeout(id);
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时，请稍后重试');
+            }
+            throw error;
         }
-
-        if (response.status === 204) {
-            return null;
-        }
-
-        return response.json();
     }
 
     // 笔记本方法

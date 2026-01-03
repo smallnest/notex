@@ -32,6 +32,9 @@ func (a *Agent) GenerateInfographImage(ctx context.Context, prompt string) (stri
 	model := "gemini-3-pro-image-preview"
 	golog.Infof("generating infographic with model %s using GenerateContent...", model)
 
+	ctx, cancel := context.WithTimeout(ctx, 300*time.Second)
+	defer cancel()
+
 	resp, err := client.Models.GenerateContent(ctx, model, genai.Text(prompt), nil)
 	if err != nil {
 		golog.Errorf("failed to generate content: %v", err)
