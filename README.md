@@ -11,7 +11,7 @@ An AI-powered knowledge management application that lets you create intelligent 
 
 **Project URL:** https://github.com/smallnest/notex
 
-![](docs/note.png)
+![](docs/note2.png)
 </div>
 
 
@@ -113,18 +113,18 @@ You can add content to your notebook in three ways:
 
 Click any transformation card to generate:
 
-| Transformation | Description |
-|---------------|-------------|
-| 📝 Summary | Condensed overview of your sources |
-| ❓ FAQ | Common questions and answers |
-| 📚 Study Guide | Educational material with learning objectives |
-| 🗂️ Outline | Hierarchical structure of topics |
-| 🎙️ Podcast | Conversational script for audio content |
-| 📅 Timeline | Chronological events from sources |
-| 📖 Glossary | Key terms and definitions |
-| ✍️ Quiz | Assessment questions with answer key |
-| 📊 Infographic | Hand-drawn style visual representation of your content |
-| 🧠 Mindmap | Visual hierarchical diagram of your sources using Mermaid.js |
+| Transformation | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
+| 📝 Summary      | Condensed overview of your sources                           |
+| ❓ FAQ          | Common questions and answers                                 |
+| 📚 Study Guide  | Educational material with learning objectives                |
+| 🗂️ Outline      | Hierarchical structure of topics                             |
+| 🎙️ Podcast      | Conversational script for audio content                      |
+| 📅 Timeline     | Chronological events from sources                            |
+| 📖 Glossary     | Key terms and definitions                                    |
+| ✍️ Quiz         | Assessment questions with answer key                         |
+| 📊 Infographic  | Hand-drawn style visual representation of your content       |
+| 🧠 Mindmap      | Visual hierarchical diagram of your sources using Mermaid.js |
 
 Or use the custom prompt field for any other transformation.
 
@@ -132,22 +132,22 @@ Or use the custom prompt field for any other transformation.
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | Required (unless using Ollama) |
-| `OPENAI_BASE_URL` | Custom API base URL | OpenAI default |
-| `OPENAI_MODEL` | Model name | `gpt-4o-mini` |
-| `EMBEDDING_MODEL` | Embedding model | `text-embedding-3-small` |
-| `OLLAMA_BASE_URL` | Ollama server URL | `http://localhost:11434` |
-| `OLLAMA_MODEL` | Ollama model name | `llama3.2` |
-| `GOOGLE_API_KEY` | Google Gemini API key | Required for Infographics |
-| `SERVER_HOST` | Server host | `0.0.0.0` |
-| `SERVER_PORT` | Server port | `8080` |
-| `VECTOR_STORE_TYPE` | Vector store backend | `sqlite` |
-| `STORE_PATH` | Database path | `./data/checkpoints.db` |
-| `MAX_SOURCES` | Max sources for RAG | `5` |
-| `CHUNK_SIZE` | Document chunk size | `1000` |
-| `CHUNK_OVERLAP` | Chunk overlap | `200` |
+| Variable            | Description           | Default                        |
+| ------------------- | --------------------- | ------------------------------ |
+| `OPENAI_API_KEY`    | OpenAI API key        | Required (unless using Ollama) |
+| `OPENAI_BASE_URL`   | Custom API base URL   | OpenAI default                 |
+| `OPENAI_MODEL`      | Model name            | `gpt-4o-mini`                  |
+| `EMBEDDING_MODEL`   | Embedding model       | `text-embedding-3-small`       |
+| `OLLAMA_BASE_URL`   | Ollama server URL     | `http://localhost:11434`       |
+| `OLLAMA_MODEL`      | Ollama model name     | `llama3.2`                     |
+| `GOOGLE_API_KEY`    | Google Gemini API key | Required for Infographics      |
+| `SERVER_HOST`       | Server host           | `0.0.0.0`                      |
+| `SERVER_PORT`       | Server port           | `8080`                         |
+| `VECTOR_STORE_TYPE` | Vector store backend  | `sqlite`                       |
+| `STORE_PATH`        | Database path         | `./data/checkpoints.db`        |
+| `MAX_SOURCES`       | Max sources for RAG   | `5`                            |
+| `CHUNK_SIZE`        | Document chunk size   | `1000`                         |
+| `CHUNK_OVERLAP`     | Chunk overlap         | `200`                          |
 
 ### Vector Store Options
 

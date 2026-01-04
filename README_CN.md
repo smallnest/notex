@@ -11,7 +11,7 @@ AI 驱动知识管理应用程序，让您从文档中创建智能笔记本。
 
 **项目地址：** https://github.com/smallnest/notex
 
-![](image.png)
+![](docs/note2.png)
 </div>
 
 ## ✨ 特性
@@ -112,17 +112,17 @@ export OLLAMA_BASE_URL=http://localhost:11434
 
 点击任意转换卡片即可生成：
 
-| 转换类型 | 描述 |
-|---------|------|
-| 📝 摘要 | 来源的精简概述 |
-| ❓ FAQ | 常见问题与答案 |
-| 📚 学习指南 | 包含学习目标的教育材料 |
-| 🗂️ 大纲 | 主题的层次结构 |
-| 🎙️ 播客 | 音频内容的对话脚本 |
-| 📅 时间线 | 来源中的按时间顺序的事件 |
-| 📖 词汇表 | 关键术语和定义 |
-| ✍️ 测验 | 带答案的评估问题 |
-| 📊 信息图 | 内容的手绘风格视觉呈现 |
+| 转换类型   | 描述                                       |
+| ---------- | ------------------------------------------ |
+| 📝 摘要     | 来源的精简概述                             |
+| ❓ FAQ      | 常见问题与答案                             |
+| 📚 学习指南 | 包含学习目标的教育材料                     |
+| 🗂️ 大纲     | 主题的层次结构                             |
+| 🎙️ 播客     | 音频内容的对话脚本                         |
+| 📅 时间线   | 来源中的按时间顺序的事件                   |
+| 📖 词汇表   | 关键术语和定义                             |
+| ✍️ 测验     | 带答案的评估问题                           |
+| 📊 信息图   | 内容的手绘风格视觉呈现                     |
 | 🧠 思维导图 | 使用 Mermaid.js 生成的来源内容可视化层级图 |
 
 或使用自定义提示字段进行任何其他转换。
@@ -131,22 +131,22 @@ export OLLAMA_BASE_URL=http://localhost:11434
 
 ### 环境变量
 
-| 变量 | 描述 | 默认值 |
-|------|------|--------|
-| `OPENAI_API_KEY` | OpenAI API 密钥 | 必需（除非使用 Ollama）|
-| `OPENAI_BASE_URL` | 自定义 API 基础 URL | OpenAI 默认值 |
-| `OPENAI_MODEL` | 模型名称 | `gpt-4o-mini` |
-| `EMBEDDING_MODEL` | 嵌入模型 | `text-embedding-3-small` |
-| `OLLAMA_BASE_URL` | Ollama 服务器 URL | `http://localhost:11434` |
-| `OLLAMA_MODEL` | Ollama 模型名称 | `llama3.2` |
-| `GOOGLE_API_KEY` | Google Gemini API 密钥 | 信息图生成必需 |
-| `SERVER_HOST` | 服务器主机 | `0.0.0.0` |
-| `SERVER_PORT` | 服务器端口 | `8080` |
-| `VECTOR_STORE_TYPE` | 向量存储后端 | `sqlite` |
-| `STORE_PATH` | 数据库路径 | `./data/checkpoints.db` |
-| `MAX_SOURCES` | RAG 的最大来源数 | `5` |
-| `CHUNK_SIZE` | 文档分块大小 | `1000` |
-| `CHUNK_OVERLAP` | 分块重叠 | `200` |
+| 变量                | 描述                   | 默认值                   |
+| ------------------- | ---------------------- | ------------------------ |
+| `OPENAI_API_KEY`    | OpenAI API 密钥        | 必需（除非使用 Ollama）  |
+| `OPENAI_BASE_URL`   | 自定义 API 基础 URL    | OpenAI 默认值            |
+| `OPENAI_MODEL`      | 模型名称               | `gpt-4o-mini`            |
+| `EMBEDDING_MODEL`   | 嵌入模型               | `text-embedding-3-small` |
+| `OLLAMA_BASE_URL`   | Ollama 服务器 URL      | `http://localhost:11434` |
+| `OLLAMA_MODEL`      | Ollama 模型名称        | `llama3.2`               |
+| `GOOGLE_API_KEY`    | Google Gemini API 密钥 | 信息图生成必需           |
+| `SERVER_HOST`       | 服务器主机             | `0.0.0.0`                |
+| `SERVER_PORT`       | 服务器端口             | `8080`                   |
+| `VECTOR_STORE_TYPE` | 向量存储后端           | `sqlite`                 |
+| `STORE_PATH`        | 数据库路径             | `./data/checkpoints.db`  |
+| `MAX_SOURCES`       | RAG 的最大来源数       | `5`                      |
+| `CHUNK_SIZE`        | 文档分块大小           | `1000`                   |
+| `CHUNK_OVERLAP`     | 分块重叠               | `200`                    |
 
 ### 向量存储选项
 
