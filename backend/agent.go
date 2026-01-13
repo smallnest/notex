@@ -163,6 +163,80 @@ func (a *Agent) GenerateTransformation(ctx context.Context, req *TransformationR
 
 // Chat performs a chat query with RAG
 func (a *Agent) Chat(ctx context.Context, notebookID, message string, history []ChatMessage) (*ChatResponse, error) {
+	chatResult, err := a.buildChatPrompt(ctx, message, history)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate response
+	ctx, cancel := context.WithTimeout(ctx, 300*time.Second)
+	defer cancel()
+
+	response, err := a.provider.GenerateFromSinglePrompt(ctx, a.llm, chatResult.Prompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate response: %w", err)
+	}
+
+	return &ChatResponse{
+		Message:   response,
+		Sources:   chatResult.Sources,
+		SessionID: notebookID,
+		Metadata: map[string]interface{}{
+			"docs_retrieved": chatResult.DocsRetrieved,
+		},
+	}, nil
+}
+
+// ChatStream 使用 RAG 进行对话并流式输出增量内容。
+func (a *Agent) ChatStream(ctx context.Context, notebookID, message string, history []ChatMessage, onToken func(string) error) (*ChatResponse, error) {
+	chatResult, err := a.buildChatPrompt(ctx, message, history)
+	if err != nil {
+		return nil, err
+	}
+
+	var contentBuilder strings.Builder
+	streamingFunc := func(ctx context.Context, chunk []byte) error {
+		if len(chunk) == 0 {
+			return nil
+		}
+		text := string(chunk)
+		contentBuilder.WriteString(text)
+		if onToken != nil {
+			return onToken(text)
+		}
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 300*time.Second)
+	defer cancel()
+
+	response, err := a.provider.GenerateFromSinglePrompt(ctx, a.llm, chatResult.Prompt, llms.WithStreamingFunc(streamingFunc))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate response: %w", err)
+	}
+
+	finalContent := contentBuilder.String()
+	if finalContent == "" {
+		finalContent = response
+	}
+
+	return &ChatResponse{
+		Message:   finalContent,
+		Sources:   chatResult.Sources,
+		SessionID: notebookID,
+		Metadata: map[string]interface{}{
+			"docs_retrieved": chatResult.DocsRetrieved,
+		},
+	}, nil
+}
+
+type chatPromptResult struct {
+	Prompt        string
+	Sources       []SourceSummary
+	DocsRetrieved int
+}
+
+func (a *Agent) buildChatPrompt(ctx context.Context, message string, history []ChatMessage) (*chatPromptResult, error) {
 	// Perform similarity search to find relevant sources
 	docs, err := a.vectorStore.SimilaritySearch(ctx, message, a.cfg.MaxSources)
 	if err != nil {
@@ -210,15 +284,6 @@ func (a *Agent) Chat(ctx context.Context, notebookID, message string, history []
 		return nil, fmt.Errorf("failed to format prompt: %w", err)
 	}
 
-	// Generate response
-	ctx, cancel := context.WithTimeout(ctx, 300*time.Second)
-	defer cancel()
-
-	response, err := a.provider.GenerateFromSinglePrompt(ctx, a.llm, promptValue)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate response: %w", err)
-	}
-
 	// Build source summaries
 	sourceSummaries := make([]SourceSummary, 0, len(docs))
 	sourceMap := make(map[string]bool)
@@ -235,13 +300,10 @@ func (a *Agent) Chat(ctx context.Context, notebookID, message string, history []
 		}
 	}
 
-	return &ChatResponse{
-		Message:   response,
-		Sources:   sourceSummaries,
-		SessionID: notebookID,
-		Metadata: map[string]interface{}{
-			"docs_retrieved": len(docs),
-		},
+	return &chatPromptResult{
+		Prompt:        promptValue,
+		Sources:       sourceSummaries,
+		DocsRetrieved: len(docs),
 	}, nil
 }
 

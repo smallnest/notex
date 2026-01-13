@@ -367,6 +367,11 @@ class OpenNotebook {
         }
     }
 
+    getWebSocketURL(path) {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        return `${protocol}://${window.location.host}${path}`;
+    }
+
     // 笔记本方法
     async loadNotebooks() {
         try {
@@ -1471,7 +1476,15 @@ class OpenNotebook {
 
         this.setStatus('思考中...');
 
+        const assistantRef = this.addMessage('assistant', '');
+
         try {
+            const streamResult = await this.streamChat(message, assistantRef);
+            if (streamResult.used) {
+                this.setStatus(streamResult.ok ? '就绪' : '错误');
+                return;
+            }
+
             const response = await this.api(`/notebooks/${this.currentNotebook.id}/chat`, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -1480,11 +1493,12 @@ class OpenNotebook {
                 }),
             });
 
-            this.addMessage('assistant', response.message, response.sources);
+            this.updateMessageContent(assistantRef, response.message, true);
+            this.updateMessageSources(assistantRef, response.sources);
             this.currentChatSession = response.session_id;
             this.setStatus('就绪');
         } catch (error) {
-            this.addMessage('assistant', `错误: ${error.message}`);
+            this.updateMessageContent(assistantRef, `错误: ${error.message}`, false);
             this.setStatus('错误');
         }
     }
@@ -1505,24 +1519,125 @@ class OpenNotebook {
         avatar.textContent = role === 'assistant' ? 'AI' : '你';
 
         const messageText = message.querySelector('.message-text');
-        if (role === 'assistant') {
-            messageText.innerHTML = marked.parse(content);
-        } else {
-            messageText.textContent = content;
-        }
+        const sourcesContainer = message.querySelector('.message-sources');
+        const messageRef = {
+            role,
+            element: message,
+            text: messageText,
+            sources: sourcesContainer
+        };
 
-        if (sources.length > 0) {
-            const sourcesContainer = message.querySelector('.message-sources');
-            sources.forEach(source => {
-                const tag = document.createElement('span');
-                tag.className = 'source-tag';
-                tag.textContent = source.name || source.id;
-                sourcesContainer.appendChild(tag);
-            });
-        }
+        this.updateMessageContent(messageRef, content, role === 'assistant');
+        this.updateMessageSources(messageRef, sources);
 
         container.appendChild(clone);
         container.scrollTop = container.scrollHeight;
+
+        return messageRef;
+    }
+
+    updateMessageContent(messageRef, content, renderMarkdown = false) {
+        if (!messageRef || !messageRef.text) return;
+        if (messageRef.role === 'assistant' && renderMarkdown) {
+            messageRef.text.innerHTML = marked.parse(content || '');
+        } else {
+            messageRef.text.textContent = content || '';
+        }
+    }
+
+    updateMessageSources(messageRef, sources = []) {
+        if (!messageRef || !messageRef.sources) return;
+        messageRef.sources.innerHTML = '';
+        sources.forEach(source => {
+            const tag = document.createElement('span');
+            tag.className = 'source-tag';
+            tag.textContent = source.name || source.id;
+            messageRef.sources.appendChild(tag);
+        });
+    }
+
+    async streamChat(message, assistantRef) {
+        if (!window.WebSocket) {
+            return { used: false, ok: false };
+        }
+
+        const wsUrl = this.getWebSocketURL(`/api/notebooks/${this.currentNotebook.id}/chat/stream`);
+
+        return new Promise((resolve) => {
+            let buffer = '';
+            let hasDone = false;
+            let hasData = false;
+            let resolved = false;
+
+            const finish = (used, ok) => {
+                if (resolved) return;
+                resolved = true;
+                resolve({ used, ok });
+            };
+
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    message: message,
+                    session_id: this.currentChatSession || undefined,
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (e) {
+                    return;
+                }
+
+                if (data.type === 'delta') {
+                    const chunk = data.content || '';
+                    if (chunk) {
+                        hasData = true;
+                        buffer += chunk;
+                        this.updateMessageContent(assistantRef, buffer, false);
+                    }
+                    return;
+                }
+
+                if (data.type === 'done') {
+                    hasDone = true;
+                    buffer = data.message || buffer;
+                    this.updateMessageContent(assistantRef, buffer, true);
+                    this.updateMessageSources(assistantRef, data.sources || []);
+                    if (data.session_id) {
+                        this.currentChatSession = data.session_id;
+                    }
+                    ws.close();
+                    finish(true, true);
+                    return;
+                }
+
+                if (data.type === 'error') {
+                    this.updateMessageContent(assistantRef, `错误: ${data.error || '请求失败'}`, false);
+                    ws.close();
+                    finish(true, false);
+                }
+            };
+
+            ws.onerror = () => {
+                finish(false, false);
+            };
+
+            ws.onclose = () => {
+                if (resolved) return;
+                if (!hasData) {
+                    finish(false, false);
+                    return;
+                }
+                if (!hasDone) {
+                    this.updateMessageContent(assistantRef, `${buffer}\n\n(连接中断，请重试)`, false);
+                    finish(true, false);
+                }
+            };
+        });
     }
 
     // UI 方法

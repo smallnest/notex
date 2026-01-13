@@ -127,6 +127,7 @@ func (s *Server) setupRoutes() {
 
 			// Chat within a notebook
 			notebooks.GET("/:id/chat/sessions", s.handleListChatSessions)
+			notebooks.GET("/:id/chat/stream", s.handleChatStream)
 			notebooks.POST("/:id/chat/sessions", s.handleCreateChatSession)
 			notebooks.DELETE("/:id/chat/sessions/:sessionId", s.handleDeleteChatSession)
 			notebooks.POST("/:id/chat/sessions/:sessionId/messages", s.handleSendMessage)
