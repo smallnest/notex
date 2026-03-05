@@ -233,6 +233,15 @@ PODCAST_VOICE=alloy    # 选项：alloy、echo、fable、onyx、nova、shimmer
 # 功能开关
 ALLOW_DELETE=true
 ALLOW_MULTIPLE_NOTES_OF_SAME_TYPE=true
+
+# S3 / Ceph 对象存储，文件上传
+S3_ENDPOINT=https://s3.example.com
+S3_REGION=us-east-1   # default `us-east-1`
+S3_ACCESS_KEY=yourkey
+S3_SECRET_KEY=yoursecret
+S3_BUCKET=notex-uploads
+S3_FORCE_PATH_STYLE=true  # usually true for Ceph/MinIO
+S3_SKIP_TLS_VERIFY=true # default false
 ```
 
 ## 🔧 开发

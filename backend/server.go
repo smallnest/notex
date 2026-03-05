@@ -2,9 +2,11 @@ package backend
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"embed"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -13,6 +15,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+
+	// "github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -30,10 +40,11 @@ type Server struct {
 	agent       *Agent
 	http        *gin.Engine
 	auth        *AuthHandler
+	s3Client    *s3.Client
 	// Track which notebooks have been loaded into vector store
 	loadedNotebooks map[string]bool
 	vectorMutex     sync.RWMutex
-	memoryManager *MemoryManager
+	memoryManager   *MemoryManager
 }
 
 // NewServer creates a new server
@@ -86,6 +97,12 @@ func NewServer(cfg Config) (*Server, error) {
 	// Set max upload size for multipart forms
 	router.MaxMultipartMemory = cfg.MaxUploadSize
 
+	// Initialize S3 client if configuration present
+	s3Client, err := NewS3Client(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize s3 client: %w", err)
+	}
+
 	s := &Server{
 		cfg:             cfg,
 		vectorStore:     vectorStore,
@@ -93,6 +110,7 @@ func NewServer(cfg Config) (*Server, error) {
 		agent:           agent,
 		http:            router,
 		auth:            authHandler,
+		s3Client:        s3Client,
 		loadedNotebooks: make(map[string]bool),
 		memoryManager:   memoryManager,
 	}
@@ -103,6 +121,41 @@ func NewServer(cfg Config) (*Server, error) {
 	s.setupRoutes()
 
 	return s, nil
+}
+
+// NewS3Client create a new S3 client if S3 configuration is provided, otherwise returns nil
+func NewS3Client(cfg Config) (*s3.Client, error) {
+	var s3Client *s3.Client
+	if cfg.S3Endpoint != "" {
+		// sanitize endpoint and ensure region
+		cfg.S3Endpoint = strings.TrimRight(cfg.S3Endpoint, "/")
+		ctxCfg := context.Background()
+		// Prepare HTTP client with optional TLS skip verify for self-signed certs
+		httpClient := http.DefaultClient
+		if cfg.S3SkipTLSVerify {
+			transport := &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+			httpClient = &http.Client{Transport: transport}
+			golog.Warnf("S3_SKIP_TLS_VERIFY is enabled: TLS certificate verification will be skipped for S3 endpoint %s", cfg.S3Endpoint)
+		}
+
+		awsCfg, err := config.LoadDefaultConfig(ctxCfg,
+			config.WithBaseEndpoint(cfg.S3Endpoint),
+			config.WithRegion(cfg.S3Region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.S3AccessKey, cfg.S3SecretKey, "")),
+			config.WithHTTPClient(httpClient),
+			config.WithRequestChecksumCalculation(aws.RequestChecksumCalculationWhenRequired),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to configure s3 client: %w", err)
+		}
+		s3Client = s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			o.UsePathStyle = cfg.S3ForcePathStyle
+		})
+		golog.Infof("✅ s3 client initialized (bucket=%s endpoint=%s)", cfg.S3Bucket, cfg.S3Endpoint)
+	}
+	return s3Client, nil
 }
 
 // setupRoutes configures all routes
@@ -615,6 +668,30 @@ func (s *Server) handleDeleteSource(c *gin.Context) {
 		return
 	}
 
+	// try delete file (safe type assertion and non-existence handling)
+	if v, ok := source.Metadata["path"]; ok {
+		pathStr := v.(string)
+		if err := os.Remove(pathStr); err != nil {
+			golog.Errorf("failed to delete file: %s", pathStr)
+		}
+	}
+
+	// if s3Client init delete object (safe type assertion)
+	if s.s3Client != nil {
+		if v, ok := source.Metadata["s3_key"]; ok {
+			s3Key := v.(string)
+			_, err := s.s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+				Bucket: aws.String(s.cfg.S3Bucket),
+				Key:    aws.String(s3Key),
+			})
+			if err != nil {
+				golog.Errorf("failed to delete S3 object: %v", err)
+			}
+		} else {
+			golog.Errorf("source not exist s3_key: %s", sourceID)
+		}
+	}
+
 	if err := s.store.DeleteSource(ctx, sourceID); err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to delete source"})
 		return
@@ -678,16 +755,6 @@ func (s *Server) handleUpload(c *gin.Context) {
 		return
 	}
 
-	// Create source
-	source := &Source{
-		NotebookID: notebookID,
-		Name:       file.Filename, // Keep original filename for display
-		Type:       "file",
-		FileName:   uniqueFileName, // Store unique filename
-		FileSize:   file.Size,
-		Metadata:   map[string]interface{}{"path": tempPath, "user_id": userID},
-	}
-
 	// Extract content
 	content, err := s.vectorStore.ExtractDocument(ctx, tempPath)
 	if err != nil {
@@ -697,7 +764,33 @@ func (s *Server) handleUpload(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: fmt.Sprintf("Failed to extract document content: %v", err)})
 		return
 	}
-	source.Content = content
+
+	source := &Source{
+		NotebookID: notebookID,
+		Name:       file.Filename, // Keep original filename for display
+		Type:       "file",
+		FileName:   uniqueFileName, // Store unique filename
+		FileSize:   file.Size,
+		Content:    content,
+		Metadata:   map[string]interface{}{"user_id": userID},
+	}
+
+	// If S3 is configured, upload then cleanup local copy and record key
+	if s.s3Client != nil {
+		s3Key := fmt.Sprintf("%s/%s", userID, uniqueFileName)
+		if err := s.uploadToS3(ctx, tempPath, s3Key); err != nil {
+			golog.Errorf("failed to upload to S3: %v", err)
+			// remove local copy
+			os.Remove(tempPath)
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to upload file to storage"})
+			return
+		}
+		source.Metadata["s3_key"] = s3Key
+		// local copy no longer needed once stored remotely
+		os.Remove(tempPath)
+	} else {
+		source.Metadata["path"] = tempPath
+	}
 
 	if err := s.store.CreateSource(ctx, source); err != nil {
 		golog.Errorf("failed to create source: %v", err)
@@ -1443,6 +1536,70 @@ func (s *Server) handleServeFile(c *gin.Context) {
 
 	golog.Infof("File served: %s (notebook: %s, public: %v, user: %s)",
 		filename, notebookID, isPublic, userID)
+}
+
+// uploadToS3 uploads a local file to the configured S3 bucket using the
+// provided object key. The caller is responsible for creating and closing the
+// local file. This helper returns any error from the SDK directly.
+func (s *Server) uploadToS3(ctx context.Context, localPath, key string) error {
+	if s.s3Client == nil {
+		return fmt.Errorf("s3 client not configured")
+	}
+	f, err := os.Open(localPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	uploader := manager.NewUploader(s.s3Client)
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(s.cfg.S3Bucket),
+		Key:    aws.String(key),
+		Body:   f,
+	})
+
+	// ERROR: XAmzContentSHA256Mismatch, like s3Client config at line 124
+	// trans := transfermanager.New(s.s3Client)
+	// _, err = trans.UploadObject(ctx,
+	// 	&transfermanager.UploadObjectInput{
+	// 		Bucket: aws.String(s.cfg.S3Bucket),
+	// 		Key:    aws.String(key),
+	// 		Body:   f,
+	// 	})
+
+	return err
+}
+
+// serveFileFromS3 streams an object from S3 directly to the HTTP response.
+// It assumes access control has already been performed by the caller.
+func (s *Server) serveFileFromS3(c *gin.Context, key string) {
+	if s.s3Client == nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "S3 storage not configured"})
+		return
+	}
+
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(s.cfg.S3Bucket),
+		Key:    aws.String(key),
+	}
+	output, err := s.s3Client.GetObject(c.Request.Context(), input)
+	if err != nil {
+		golog.Errorf("s3 get object error: %v", err)
+		c.JSON(http.StatusNotFound, ErrorResponse{Error: "File not found"})
+		return
+	}
+	defer output.Body.Close()
+
+	// determine content type either from S3 metadata or fallback to octet-stream
+	contentType := "application/octet-stream"
+	if output.ContentType != nil {
+		contentType = *output.ContentType
+	}
+	c.Header("Content-Type", contentType)
+	// caching headers are handled by caller
+	if _, err := io.Copy(c.Writer, output.Body); err != nil {
+		golog.Errorf("error streaming s3 object: %v", err)
+	}
 }
 
 func writeFile(path, content string) error {

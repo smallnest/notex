@@ -11,8 +11,8 @@ import (
 // Config holds the application configuration
 type Config struct {
 	// Server settings
-	ServerHost string
-	ServerPort string
+	ServerHost    string
+	ServerPort    string
 	MaxUploadSize int64 // Maximum upload file size in bytes (default: 100MB)
 
 	// LLM settings
@@ -79,11 +79,20 @@ type Config struct {
 	GoogleRedirectURL  string
 
 	// Test Mode
-	EnableTestMode     bool
-	TestUserID         string
-	TestUserName       string
-	TestUserEmail      string
-	TestUserAvatar     string
+	EnableTestMode bool
+	TestUserID     string
+	TestUserName   string
+	TestUserEmail  string
+	TestUserAvatar string
+
+	// Optional S3 / Ceph storage configuration
+	S3Endpoint       string
+	S3Region         string // region string, may be blank for Ceph
+	S3AccessKey      string
+	S3SecretKey      string
+	S3Bucket         string
+	S3ForcePathStyle bool
+	S3SkipTLSVerify  bool
 }
 
 // loadEnv loads .env file if it exists (ignoring errors if file not found)
@@ -147,11 +156,20 @@ func LoadConfig() Config {
 		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
 		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", ""),
 
-		EnableTestMode:     getEnvBool("ENABLE_TEST_MODE", false),
-		TestUserID:         getEnv("TEST_USER_ID", "test-user-123"),
-		TestUserName:       getEnv("TEST_USER_NAME", "测试用户"),
-		TestUserEmail:      getEnv("TEST_USER_EMAIL", "test@example.com"),
-		TestUserAvatar:     getEnv("TEST_USER_AVATAR", ""),
+		EnableTestMode: getEnvBool("ENABLE_TEST_MODE", false),
+		TestUserID:     getEnv("TEST_USER_ID", "test-user-123"),
+		TestUserName:   getEnv("TEST_USER_NAME", "测试用户"),
+		TestUserEmail:  getEnv("TEST_USER_EMAIL", "test@example.com"),
+		TestUserAvatar: getEnv("TEST_USER_AVATAR", ""),
+
+		// S3 / Ceph storage
+		S3Endpoint:       getEnv("S3_ENDPOINT", ""),
+		S3Region:         getEnv("S3_REGION", "us-east-1"),
+		S3AccessKey:      getEnv("S3_ACCESS_KEY", ""),
+		S3SecretKey:      getEnv("S3_SECRET_KEY", ""),
+		S3Bucket:         getEnv("S3_BUCKET", ""),
+		S3ForcePathStyle: getEnvBool("S3_FORCE_PATH_STYLE", true),
+		S3SkipTLSVerify:  getEnvBool("S3_SKIP_TLS_VERIFY", false),
 	}
 
 	// Auto-detect provider from base URL or model name
